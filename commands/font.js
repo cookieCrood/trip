@@ -22,7 +22,7 @@ module.exports = {
             .setColor(embedColor)
             .setDescription(`**Original** \`${str}\`\n${data}\n\nIssued by ${interaction.user}`)
             .setFooter({ text: 'Powered by trip' })
-            .setTimestamp();
+            .setTimestamp()
 
         await interaction.reply({ embeds: [embed], flags: ephemeral });
     }

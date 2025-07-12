@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, MessageFlags, EmbedBuilder } = require("discord.js");
 const { embedColor } = require('./theme.json')
+const { skyblock, boxes, arrows } = require('./assets/icons.json')
 const ephemeral = MessageFlags.Ephemeral
 
 module.exports = {
@@ -8,23 +9,19 @@ module.exports = {
         .setDescription('Get a list of special characters'),
     
     async execute(interaction, client) {
-        const skyblock = [
-            '❁', '❤', '♥', '❈', '❂', '✦', '✎', '☣', '☠', '⚔', '⫽', '✯', '♣', 'α', '๑',
-            '⸕', '✧', '☘', '⸎', 'ʬ', '♨', '᠅', '≈', '☠', '❣', '✆', '✪', '➊', '➋', '➌', '➍', '➎',
-            '☀', '☽', '⏣', '✌', '♲', '☀', '☠', '⚠', '◆', '✿', '♪', '♫', '⓪', 'ⓩ', '▲', '⁍', '❤',
-            '✦', '⚚', '✖', '✔', '➜', '✯', '☠', '﴾', '﴿', '☬', '☄', '⚑', 'Ⓑ', '✦', '☺', '✧', '♞',
-            '✷', '❤', '❈', '✎', '❁', '☘', '⸕', '✧', '❂', '☠', '☤', '⚔', '✦', '❂', '⦾', '⦾',
-            '⦾', '⦾', '⦾', '☂', '☯', '☄', '♨', '❣', '♨', 'ﬗ', 'Ⓐ', 'Ⓑ', 'Ⓒ', 'Ⓓ', 'ቾ', '⚒',
-            'ᝐ', '҉', '⁑', 'Ѫ', 'ᛤ', '⋗', '¦', '▬', '⚡', '▶', '▁', '▂', '▃', '▄', '▅', '▆', '■',
-            '♢', '○', '∞', '©', '∫', '•', '‣', 'ℏ'
-        ]
-
-        const skyblockFormatted = skyblock.map(ch => `\`${ch}\``).join(' ')
 
         const embed = new EmbedBuilder()
             .setTitle('Special Characters')
-            .setDescription(`
-**SkyBlock** ${skyblockFormatted} [Source](https://hypixel.net/threads/every-skyblock-stat-skill-item-symbol-for-item-creation-ideas.5230474/)`)
+            .setDescription(`Use these Characters to spice up your Text
+
+**SkyBlock**
+${format(skyblock)} [Source](https://hypixel.net/threads/every-skyblock-stat-skill-item-symbol-for-item-creation-ideas.5230474/)
+
+**Box Drawing**
+${format(boxes)}
+
+**Arrows**
+${format(arrows)}`)
             .setColor(embedColor)
             .setFooter({ text: 'Powered by trip' })
             .setTimestamp();
@@ -32,3 +29,11 @@ module.exports = {
         await interaction.reply({ embeds: [embed], flags: ephemeral });
     }
 }
+
+function format(list) {
+    let r = ""
+    for (const subList of list) {
+        r += subList.join(' ') + '\n'
+    }
+    return r
+} 
