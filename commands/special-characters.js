@@ -1,7 +1,7 @@
 const { SlashCommandBuilder, MessageFlags, EmbedBuilder } = require("discord.js");
 const { embedColor } = require('./theme.json')
 const { skyblock, boxes, arrows } = require('./assets/icons.json')
-const ephemeral = MessageFlags.Ephemeral
+const EPHEMERAL = MessageFlags.Ephemeral
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -12,7 +12,9 @@ module.exports = {
 
         const embed = new EmbedBuilder()
             .setTitle('Special Characters')
-            .setDescription(`Use these Characters to spice up your Text
+
+            .setDescription(
+`Use these Characters to spice up your Text
 
 **SkyBlock**
 ${format(skyblock)} [Source](https://hypixel.net/threads/every-skyblock-stat-skill-item-symbol-for-item-creation-ideas.5230474/)
@@ -21,12 +23,14 @@ ${format(skyblock)} [Source](https://hypixel.net/threads/every-skyblock-stat-ski
 ${format(boxes)}
 
 **Arrows**
-${format(arrows)}`)
+${format(arrows)}`
+)
+
             .setColor(embedColor)
             .setFooter({ text: 'Powered by trip' })
             .setTimestamp();
 
-        await interaction.reply({ embeds: [embed], flags: ephemeral });
+        await interaction.editReply({ embeds: [embed] });
     }
 }
 

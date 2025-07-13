@@ -3,7 +3,7 @@ const {token} = require("./config.json")
 const fs = require('node:fs')
 
 const { MessageFlags, ButtonStyle } = require('discord-api-types/v10');
-const ephemeral = MessageFlags.Ephemeral
+const EPHEMERAL = MessageFlags.Ephemeral
 
 const client = new Client({
 	intents: [
@@ -41,20 +41,21 @@ client.on(Events.InteractionCreate, (interaction) => {
     console.log(`Interaction: ${interaction.customId || interaction} | ran by ${interaction.user.tag} or ${interaction.user.id} | in ${interaction.guild.name}`)
     client.logInteraction(interaction)
 
-    if (!interaction.isChatInputCommand()) {
-        buttons(interaction, client)
-        return
-    }
+    interaction.deferReply().then(() => {
+        if (!interaction.isChatInputCommand()) {
+            buttons(interaction, client)
+            return
+        }
 
-    let command = client.commands.get(interaction.commandName)
+        let command = client.commands.get(interaction.commandName)
 
-    try{
-        if(interaction.replied) return;
-        command.execute(interaction, client);
-    } catch (error) {
-        console.error(error);
-    }
-
+        try{
+            if(interaction.replied) return;
+            command.execute(interaction, client)
+        } catch (error) {
+            console.error(error);
+        }
+    })
 });
 
 client.on(Events.GuildMemberAdd, (member) => {
@@ -67,11 +68,11 @@ client.on(Events.MessageCreate, (message) => {
 
 client.login(token);
 
-function buttons(stuff) {
+function buttons(interaction, client) {
 
-    if (stuff.interaction.customId) {
+    if (interaction.customId) {
 
-        client.commands.get(stuff.interaction.customId.split(':')[0]).buttons(stuff)
+        client.commands.get(interaction.customId.split(':')[0]).buttons(interaction, client)
 
     }
 }
