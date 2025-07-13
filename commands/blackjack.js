@@ -188,7 +188,6 @@ module.exports = {
 
                 }
 
-                console.log(embed)
                 await oldMessage.edit({ embeds: [embed], components: [] })
                 oldMessage.reply({ content: result })
             }
