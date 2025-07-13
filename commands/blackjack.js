@@ -37,7 +37,7 @@ module.exports = {
                 .setDescription('Bet')
                 .setMinValue(0)
                 .setMaxValue(10_000)
-                .setRequired(true)),
+                .setRequired(false)),
     
     async execute(interaction, client) {
         const playerCards = []
@@ -56,7 +56,7 @@ module.exports = {
 
         const embed = new EmbedBuilder()
             .setTitle('Blackjack')
-            .setDescription(`**${interaction.user.tag}** is Gambling\nwith a bet of **${interaction.options.getInteger('bet')}** :coin:`)
+            .setDescription(`**${interaction.user.tag}** is Gambling\nwith a bet of **${interaction.options.getInteger('bet') || 'zero'}** :coin:`)
             .setColor(embedColor)
             .setFooter({ text: 'Powered by trip' })
             .setTimestamp()
@@ -107,7 +107,7 @@ module.exports = {
             if (isPlayerBlackjack && isDealerBlackjack) {
                 interaction.followUp('Push! You got lucky this time...')
             } else if (isPlayerBlackjack) {
-                interaction.followUp(`<@${interaction.user.id}> won! :trophy:>!`)
+                interaction.followUp(`<@${interaction.user.id}> won! :trophy:!`)
             } else {
                 interaction.followUp('The **DEALER** won! gg ez!')
             }
@@ -148,7 +148,7 @@ module.exports = {
                 if (!end) {
                     buildRow(row, playerCards, dealerCards)
                 } else {
-                    let result = ''
+                    let result = 'ERROR'
 
                     if (isBusted) {
                         result = `<@${interaction.user.id}> busted!`

@@ -13,8 +13,6 @@ module.exports = {
         ),
     
     async execute(interaction, client) {
-        await interaction.deferReply();
-
         const players = ['trip', interaction.user.displayName]
 
         const isFair = interaction.options.getBoolean('fair');
