@@ -1,6 +1,7 @@
 const { Client, Events, GatewayIntentBits, ActionRowBuilder, ButtonBuilder, Collection } = require("discord.js");
 const {token} = require("./config.json")
 const fs = require('node:fs')
+const SetupHandler = require('./util/SetupHandler')
 
 const { MessageFlags, ButtonStyle } = require('discord-api-types/v10');
 const EPHEMERAL = MessageFlags.Ephemeral
@@ -34,6 +35,8 @@ client.once(Events.ClientReady, (c) => {
     console.log(`Logged in as ${c.user.tag}`);
     client.consoleChannel = client.channels.cache.get('1389684748837982328')
     setTimeout(loopLog, 30_000)
+    SetupHandler.grab(client)
+    
 });
 
 client.on(Events.InteractionCreate, (interaction) => {
@@ -60,10 +63,15 @@ client.on(Events.InteractionCreate, (interaction) => {
 
 client.on(Events.GuildMemberAdd, (member) => {
     console.log(member)
+    SetupHandler.tryJoin(member, client)
+})
+
+client.on(Events.GuildMemberRemove, (member) => {
+    SetupHandler.tryLeave(member, client)
 })
 
 client.on(Events.MessageCreate, (message) => {
-    
+    SetupHandler.tryAutoreply(message)
 })
 
 client.login(token);

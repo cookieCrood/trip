@@ -1,7 +1,11 @@
 const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, MessageFlags, escapeHeading } = require("discord.js");
 const { embedColor } = require('./theme.json')
 
+const SetupHandler = require('../util/SetupHandler')
+const MessageParser = require('../util/MessageParser')
+
 const EPHEMERAL = MessageFlags.Ephemeral
+const MESSAGE_PARSING_FLAGS = { user:true }
 
 const RANKS = {
     "0": "A",
@@ -40,6 +44,7 @@ module.exports = {
                 .setRequired(false)),
     
     async execute(interaction, client) {
+        const setup = SetupHandler.setup[interaction.guild.id].blackjack
         const playerCards = []
         for (let i = 0; i < 2; i++) {
             playerCards.push(getRandomCard(buildDeck(playerCards)))
@@ -100,23 +105,26 @@ module.exports = {
         ])
 
         const row = new ActionRowBuilder()
+        let response = false
 
         if (!isAnyBlackjack) {
             buildRow(row, playerCards, dealerCards)
         } else {
             if (isPlayerBlackjack && isDealerBlackjack) {
-                interaction.followUp('Push! You got lucky this time...')
+                response = MessageParser.parse(setup.PUSH, interaction, MESSAGE_PARSING_FLAGS)
             } else if (isPlayerBlackjack) {
-                interaction.followUp(`<@${interaction.user.id}> won! :trophy:!`)
+                response = MessageParser.parse(setup.PLAYER_BLACKJACK, { userId: interaction.user.id }, MESSAGE_PARSING_FLAGS)
             } else {
-                interaction.followUp('The **DEALER** won! gg ez!')
+                response = MessageParser.parse(setup.DEALER_BLACKJACK, { userId: interaction.user.id }, MESSAGE_PARSING_FLAGS)
             }
         }
         
         await interaction.editReply(!isAnyBlackjack ? { embeds: [embed], components: [row] } : { embeds: [embed], components: [] })
+        if (response) interaction.followUp(response)
     },
 
     async buttons(interaction, client) {
+        const setup = SetupHandler.setup[interaction.guild.id].blackjack
         await interaction.editReply({ content:'.' })
         interaction.deleteReply()
 
@@ -148,14 +156,14 @@ module.exports = {
                 if (!end) {
                     buildRow(row, playerCards, dealerCards)
                 } else {
-                    let result = 'ERROR'
+                    let response = 'ERROR'
 
                     if (isBusted) {
-                        result = `<@${interaction.user.id}> busted!`
+                        response = MessageParser.parse(setup.PLAYER_BUST, { userId: interaction.user.id }, MESSAGE_PARSING_FLAGS)
                     } else if (isPlayerBlackjack) {
-                        result = `<@${interaction.user.id}> won! :trophy:>!`
+                        response = MessageParser.parse(setup.PLAYER_BLACKJACK, { userId: interaction.user.id }, MESSAGE_PARSING_FLAGS)
                     }
-                    oldMessage.reply()
+                    oldMessage.reply(response)
                 }
             
                 await oldMessage.edit(!end ? { embeds: [embed], components: [row] } : { embeds: [embed], components: [] })
@@ -169,27 +177,68 @@ module.exports = {
 
                 embed.fields[3].value = dealerCards.map(prettifyCard).join(' ')
 
-                let result = `The **DEALER** busted!\n<@${interaction.user.id}> won! :trophy:`
+                let result = MessageParser.parse(setup.DEALER_BUST, { userId: interaction.user.id }, MESSAGE_PARSING_FLAGS)
 
                 if (analyse(dealerCards) > 21) {
                     embed.fields[4].value = `>> **${analyse(dealerCards)}** << **BUSTED**`
 
                 } else if (analyse(dealerCards) > analyse(playerCards)) {
                     embed.fields[4].value = `>> **${analyse(dealerCards)}** <<`
-                    result = `The **DEALER** won! gg ez`
+                    result = MessageParser.parse(setup.DEALER_HIGHER, { userId: interaction.user.id }, MESSAGE_PARSING_FLAGS)
 
                 } else if (analyse(dealerCards) == analyse(playerCards)) {
                     embed.fields[4].value = `>> **${analyse(dealerCards)}** <<`
-                    result = `Push! You got lucky this time...`
+                    result = MessageParser.parse(setup.PUSH, { userId: interaction.user.id }, MESSAGE_PARSING_FLAGS)
 
                 } else {
                     embed.fields[4].value = `>> **${analyse(dealerCards)}** <<`
-                    result = `<@${interaction.user.id}> won! :trophy:>`
+                    result = MessageParser.parse(setup.PLAYER_HIGHER, { userId: interaction.user.id }, MESSAGE_PARSING_FLAGS)
 
                 }
 
                 await oldMessage.edit({ embeds: [embed], components: [] })
                 oldMessage.reply({ content: result })
+                break
+            }
+            case 'double': {
+                playerCards.push(getRandomCard(buildDeck([...playerCards, ...dealerCards])))
+
+                const playerTotal = analyse(playerCards)
+                const isBusted = playerTotal > 21
+                const isPlayerBlackjack = playerTotal === 21
+
+                embed.fields[0].value = playerCards.map(prettifyCard).join(' ')
+                embed.fields[1].value = `>> **${playerTotal}** <<${isBusted ? ' **BUSTED**' : (isPlayerBlackjack ? ' **BLACKJACK**' : '')}`
+
+                let resultMessage
+
+                if (isBusted) {
+                    embed.fields[4].value = '>> **??** <<'
+                    resultMessage = MessageParser.parse(setup.PLAYER_BUST, { userId: interaction.user.id }, MESSAGE_PARSING_FLAGS)
+                } else {
+                    while (analyse(dealerCards) < 17) {
+                        dealerCards.push(getRandomCard(buildDeck([...playerCards, ...dealerCards])))
+                    }
+
+                    const dealerTotal = analyse(dealerCards)
+                    embed.fields[3].value = dealerCards.map(prettifyCard).join(' ')
+                    embed.fields[4].value = `>> **${dealerTotal}** <<${dealerTotal > 21 ? ' **BUSTED**' : ''}`
+
+                    if (dealerTotal > 21) {
+                        resultMessage = MessageParser.parse(setup.DEALER_BUST, { userId: interaction.user.id }, MESSAGE_PARSING_FLAGS)
+                    } else if (dealerTotal > playerTotal) {
+                        resultMessage = MessageParser.parse(setup.DEALER_HIGHER, { userId: interaction.user.id }, MESSAGE_PARSING_FLAGS)
+                    } else if (dealerTotal < playerTotal) {
+                        resultMessage = MessageParser.parse(setup.PLAYER_HIGHER, { userId: interaction.user.id }, MESSAGE_PARSING_FLAGS)
+                    } else {
+                        resultMessage = MessageParser.parse(setup.PUSH, { userId: interaction.user.id }, MESSAGE_PARSING_FLAGS)
+                    }
+                }
+
+                await oldMessage.edit({ embeds: [embed], components: [] })
+                await oldMessage.reply(resultMessage)
+
+                break
             }
         }
     }
