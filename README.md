@@ -1,4 +1,5 @@
-# What is this??
-A parody on crumbbot.
+# WTF is this??
+No-Storage, no-code easy-to-setup discord bot for random bs like
 
-no thats it
+ - Auto-welcome and bye messages
+ - Blackjack 💔
